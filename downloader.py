@@ -30,6 +30,7 @@ def main():
         os.chdir("downloadedFiles")
     for link in youtubeLinks:
         download(link, type)
+    subprocess.run("./cleanup.sh")
     os.chdir("..")
     
 def download(url, format) -> str:
@@ -42,7 +43,6 @@ def download(url, format) -> str:
         ys = yt.streams.get_audio_only()
     downloadedFile = ys.download()
     outputFile = safeName + "." + format
-    print(f"Output File name: {outputFile}")
     subprocess.run(["ffmpeg", "-i", downloadedFile, outputFile], check=True)
     return outputFile
 
@@ -58,8 +58,6 @@ def getArgs():
     parser.add_argument("-l", "--link", help="Link for Spotify Playlist or youtube Video")
     parser.add_argument("-t", "--type", help="Type of download, mp4, mp3 or wav")
     args = parser.parse_args()
-    print(args.link)
-    print(args.type)
     return args.link, args.type
 
 def checkSpotifyLink(link):
@@ -127,7 +125,6 @@ def getSongsFromSpotify(token, link):
 def trackSearch(id):
     url = "https://api.spotify.com/v1/tracks/"
     query_url = url + id
-    print(query_url)
     header = getAuthHeader(token)
     result = requests.get(query_url, headers=header)
     json_result = json.loads(result.content)
@@ -136,8 +133,21 @@ def trackSearch(id):
     search = name + " by " + artist
     return search
 
+def flaskDownload(link, format, directory):
+    youtubeLinks = []
+    token = getSpotifyToken()
+    if checkSpotifyLink(link):
+        songList = getSongsFromSpotify(token, link)
+        for song in songList:
+            youtubeLinks.append(search(song))
+    else:
+        youtubeLinks.append(link)
+    os.chdir(directory)
+    for link in youtubeLinks:
+        download(link, format)
+    subprocess.run("./cleanup.sh")
+
 if __name__ == "__main__":
     main()
 
-# python3 downloader.py https://open.spotify.com/playlist/34VAWXMq6tGpcIcg15AXxL?si=71028e9d1a964a08 mp3
-
+#  python3 downloader.py -l "https://open.spotify.com/playlist/34VAWXMq6tGpcIcg15AXxL?si=71028e9d1a964a08" -t mp3
