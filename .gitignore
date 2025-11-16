@@ -1,2 +1,5 @@
 /downloadedFiles/*
 .env
+.idea
+.venv
+
